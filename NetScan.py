@@ -3,14 +3,14 @@ import socket
 import time
 import speedtest
 
-# Renk Tanımları
+# Color Definitions
 RESET = "\033[0m"
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
 RED = "\033[91m"
 CYAN = "\033[96m"
 
-# Giriş ekranı
+# Welcome Message
 def print_welcome_message():
     print(RED) 
     print(" _   _      _   ____                  ")
@@ -20,12 +20,12 @@ def print_welcome_message():
     print("|_| \\_|\\___|\\__|____/ \\___\\__,_|_| |_|")  
     print(RESET)  
 
-# Log dosyasına yaz
+# Write to log file
 def log_to_file(message):
     with open("logs.txt", "a") as log_file:
         log_file.write(message + "\n")
 
-# Hostname alma
+# Get Hostname
 def get_hostname(ip):
     try:
         return socket.gethostbyaddr(ip)[0]
@@ -38,9 +38,9 @@ def get_hostname(ip):
                 return line.strip().split()[0]
     except:
         pass
-    return f"{YELLOW}Hostname bulunamadı{RESET}"
+    return f"{YELLOW}Hostname not found{RESET}"
 
-# MAC adresi alma
+# Get MAC Address
 def get_mac(ip):
     try:
         output = os.popen("arp -a " + ip).read()
@@ -49,22 +49,22 @@ def get_mac(ip):
                 parts = line.split()
                 if len(parts) >= 2:
                     return parts[1]
-        return f"{YELLOW}MAC adresi bulunamadı{RESET}"
+        return f"{YELLOW}MAC address not found{RESET}"
     except:
-        return f"{RED}MAC sorgusu desteklenemiyor{RESET}"
+        return f"{RED}MAC query not supported{RESET}"
 
-# Ağ cihazlarını tarama
+# Scan devices on the network
 def get_devices_on_network(target_ip):
     ip_parts = target_ip.split('.')
     base_ip = '.'.join(ip_parts[:3]) + '.'
     devices = []
 
-    print(f"\n🔍 {CYAN}{base_ip}1 - {base_ip}254{RESET} aralığında ağ taraması başlatılıyor...\n")
+    print(f"\n🔍 {CYAN}{base_ip}1 - {base_ip}254{RESET} range network scan is starting...\n")
     start_time = time.time()
 
     for i in range(1, 255):
         ip = base_ip + str(i)
-        response = os.system(f"ping -n 1 -w 1 {ip} > nul")  # Windows için
+        response = os.system(f"ping -n 1 -w 1 {ip} > nul")  # For Windows
         if response == 0:
             hostname = get_hostname(ip)
             mac = get_mac(ip)
@@ -72,33 +72,33 @@ def get_devices_on_network(target_ip):
             print(f"{GREEN}✅ {ip:15} | {hostname:25} | {mac}{RESET}")
     
     duration = time.time() - start_time
-    print(f"\n{GREEN}✅ Tarama tamamlandı. Toplam bulunan cihaz: {len(devices)}{RESET}")
-    print(f"{CYAN}⏱️ Tarama süresi: {round(duration, 2)} saniye{RESET}\n")
+    print(f"\n{GREEN}✅ Scan completed. Total devices found: {len(devices)}{RESET}")
+    print(f"{CYAN}⏱️ Scan time: {round(duration, 2)} seconds{RESET}\n")
     
-    log_message = f"Ağ Tarama Sonuçları: {len(devices)} cihaz bulundu, Tarama süresi: {round(duration, 2)} saniye"
+    log_message = f"Network Scan Results: {len(devices)} devices found, Scan time: {round(duration, 2)} seconds"
     log_to_file(log_message)
 
     return devices
 
-# Hız testi
+# Speed test
 def run_speed_test():
-    print("\n🌐 İnternet hız testi başlatılıyor...\n")
+    print("\n🌐 Starting internet speed test...\n")
     st = speedtest.Speedtest()
     st.get_best_server()
     download_speed = st.download() / 1_000_000  # Mbps
     upload_speed = st.upload() / 1_000_000      # Mbps
     ping = st.results.ping
 
-    print(f"📥 İndirme Hızı: {download_speed:.2f} Mbps")
-    print(f"📤 Yükleme Hızı: {upload_speed:.2f} Mbps")
-    print(f"📶 Gecikme (Ping): {ping:.2f} ms\n")
+    print(f"📥 Download Speed: {download_speed:.2f} Mbps")
+    print(f"📤 Upload Speed: {upload_speed:.2f} Mbps")
+    print(f"📶 Latency (Ping): {ping:.2f} ms\n")
 
-    log_message = f"İnternet Hız Testi Sonuçları: İndirme Hızı: {download_speed:.2f} Mbps, Yükleme Hızı: {upload_speed:.2f} Mbps, Ping: {ping:.2f} ms"
+    log_message = f"Internet Speed Test Results: Download Speed: {download_speed:.2f} Mbps, Upload Speed: {upload_speed:.2f} Mbps, Ping: {ping:.2f} ms"
     log_to_file(log_message)
 
-# Port tarama
+# Port scan
 def scan_ports(ip, start_port, end_port):
-    print(f"\n🔍 {ip} üzerinde {start_port} ile {end_port} arasındaki portlar taranıyor...\n")
+    print(f"\n🔍 Scanning ports from {start_port} to {end_port} on {ip}...\n")
     
     open_ports = []
     
@@ -113,50 +113,50 @@ def scan_ports(ip, start_port, end_port):
         except socket.error:
             continue  
     
-    log_message = f"Port Tarama Sonuçları: Tarama yapılan IP: {ip}, Açık portlar: {open_ports}"
+    log_message = f"Port Scan Results: Scanned IP: {ip}, Open ports: {open_ports}"
     log_to_file(log_message)
     
     return open_ports
 
-# Ana sistem
+# Main System
 def system():
     print_welcome_message()  
     while True:
-        print(f"\n{CYAN}Ağ Tarayıcı ve Hız Testi Tool{RESET}")
-        print(f"{CYAN}[1] : Ağ İzleme ve Cihaz Tespiti{RESET}")
-        print(f"{CYAN}[2] : İnternet Hız Testi{RESET}")
-        print(f"{CYAN}[3] : Port Tarama{RESET}")
-        print(f"{CYAN}[4] : Çıkış{RESET}\n")
+        print(f"\n{CYAN}Network Scanner and Speed Test Tool{RESET}")
+        print(f"{CYAN}[1] : Network Monitoring and Device Detection{RESET}")
+        print(f"{CYAN}[2] : Internet Speed Test{RESET}")
+        print(f"{CYAN}[3] : Port Scan{RESET}")
+        print(f"{CYAN}[4] : Exit{RESET}\n")
 
-        selecter = input("Seçiminizi yapın: ")
+        selecter = input("Make your selection: ")
 
         if selecter == "1":
-            print("\n🔍 Ağ İzleme başlatılıyor...")
-            target_ip = input(f"{YELLOW}🎯 IP adresi girin (örn: 192.168.1.1): {RESET}").strip()
+            print("\n🔍 Network Monitoring is starting...")
+            target_ip = input(f"{YELLOW}🎯 Enter IP address (e.g., 192.168.1.1): {RESET}").strip()
             get_devices_on_network(target_ip)
 
         elif selecter == "2":
             run_speed_test()
 
         elif selecter == "3":
-            target_ip = input(f"{YELLOW}🎯 Tarama yapılacak IP adresini girin (örn: 192.168.1.1): {RESET}").strip()
-            start_port = int(input("📍 Başlangıç portunu girin: "))
-            end_port = int(input("📍 Bitiş portunu girin: "))
+            target_ip = input(f"{YELLOW}🎯 Enter the IP address to scan (e.g., 192.168.1.1): {RESET}").strip()
+            start_port = int(input("📍 Enter the starting port: "))
+            end_port = int(input("📍 Enter the ending port: "))
             open_ports = scan_ports(target_ip, start_port, end_port)
             
             if open_ports:
-                print(f"\n{len(open_ports)} açık port bulundu:")
+                print(f"\n{len(open_ports)} open ports found:")
                 for port in open_ports:
-                    print(f"{GREEN}✅ Port {port} açık.{RESET}")
+                    print(f"{GREEN}✅ Port {port} is open.{RESET}")
             else:
-                print(f"{YELLOW}\nAçık port bulunamadı.{RESET}")
+                print(f"{YELLOW}\nNo open ports found.{RESET}")
 
         elif selecter == "4":
-            print(f"{CYAN}Çıkış yapılıyor...{RESET}")
+            print(f"{CYAN}Exiting...{RESET}")
             break  
 
         else:
-            print(f"{RED}Geçersiz seçim! Lütfen geçerli bir seçenek girin.{RESET}")
+            print(f"{RED}Invalid selection! Please enter a valid option.{RESET}")
 
 if __name__ == "__main__":
     system()
